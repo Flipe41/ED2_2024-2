@@ -1,0 +1,73 @@
+/*
+O código abaixo apresenta a implementação de uma pilha e suas operações básicas.
+
+1 - comente o código
+2 - implemente uma função para verificar se a pilha está vazia.
+3 - proponha uma função que possa fazer expansão dinâmica quando a capacidade máxima é atingida, em vez de simplesmente negar novas inserções na pilha.
+*/
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_SIZE 3
+
+int* pilha;
+int topo = -1;
+int capacidade = MAX_SIZE;
+
+// Insere um elemento na pilha
+void push(int elemento) {
+    if (topo < capacidade - 1) {
+        pilha[++topo] = elemento;
+    } else {
+        printf("Pilha cheia! Expandindo...\n");
+        capacidade *= 2;
+        pilha = realloc(pilha, capacidade * sizeof(int));
+        pilha[++topo] = elemento;
+    }
+}
+
+// Remove e retorna o elemento do topo
+int pop() {
+    if (topo == -1) {
+        printf("Pilha vazia!\n");
+        return -1;
+    }
+    return pilha[topo--];
+}
+
+// Retorna o elemento do topo sem removê-lo
+int top() {
+    if (topo == -1) {
+        printf("Pilha vazia!\n");
+        return -1;
+    }
+    return pilha[topo];
+}
+
+// Verifica se a pilha está vazia
+int isEmpty() {
+    return topo == -1;
+}
+
+// Imprime o conteúdo da pilha
+void imprimir() {
+    for (int i = topo; i >= 0; i--) {
+        printf("%d ", pilha[i]);
+    }
+    printf("\n");
+}
+
+int main() {
+    pilha = (int*)malloc(capacidade * sizeof(int));
+
+    push(10);
+    push(20);
+    push(30);
+    imprimir();
+    printf("Elemento no topo: %d\n", top());
+    printf("Elemento removido: %d\n", pop());
+    imprimir();
+
+    free(pilha);
+    return 0;
+}
