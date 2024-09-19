@@ -1,0 +1,116 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define TAMANHO_HASH 10
+
+// Estrutura para representar um filme ou série
+typedef struct {
+    int id;               // ID único do filme/série
+    char titulo[100];     // Título do filme/série
+    char genero[50];      // Gênero do filme/série
+    float avaliacao;      // Avaliação do filme/série (0 a 5)
+    int popularidade;     // Popularidade global (número de visualizações)
+} Conteudo;
+
+// Estrutura da Tabela Hash
+typedef struct {
+    Conteudo *tabela[TAMANHO_HASH];  // Array de ponteiros para armazenar filmes/séries
+} TabelaHash;
+
+// Função Hash: Retorna o índice baseado no ID do conteúdo
+int funcao_hash(int id) {
+    return id % TAMANHO_HASH;  // Usa módulo para determinar a posição na tabela
+}
+
+// Função para inserir um conteúdo na tabela hash
+void inserir(TabelaHash *tabela, Conteudo *conteudo) {
+    int indice = funcao_hash(conteudo->id);  // Calcula o índice baseado no ID
+    tabela->tabela[indice] = conteudo;  // Insere o conteúdo na tabela
+}
+
+// Função para buscar um conteúdo na tabela hash pelo ID
+Conteudo *buscar(TabelaHash *tabela, int id) {
+    int indice = funcao_hash(id);  // Calcula o índice para busca
+    return tabela->tabela[indice];  // Retorna o conteúdo encontrado
+}
+
+// Função para deletar um conteúdo da tabela hash
+void deletar(TabelaHash *tabela, int id) {
+    int indice = funcao_hash(id);  // Calcula o índice para remoção
+    if (tabela->tabela[indice] != NULL) {
+        tabela->tabela[indice] = NULL;  // Remove o conteúdo definindo como NULL
+        printf("Conteúdo com ID %d foi deletado.\n", id);
+    } else {
+        printf("Conteúdo com ID %d não encontrado.\n", id);
+    }
+}
+
+// Função para exibir recomendações de filmes/séries de um gênero específico
+void exibir_recomendacoes_por_genero(TabelaHash *tabela, const char *genero) {
+    printf("Recomendações de %s:\n", genero);
+    for (int i = 0; i < TAMANHO_HASH; i++) {
+        if (tabela->tabela[i] != NULL && strcmp(tabela->tabela[i]->genero, genero) == 0) {
+            printf("ID: %d, Título: %s, Avaliação: %.2f, Popularidade: %d\n",
+                   tabela->tabela[i]->id,
+                   tabela->tabela[i]->titulo,
+                   tabela->tabela[i]->avaliacao,
+                   tabela->tabela[i]->popularidade);
+        }
+    }
+}
+
+// Função para exibir recomendações dos conteúdos mais populares
+void exibir_recomendacoes_populares(TabelaHash *tabela) {
+    printf("\nRecomendações dos mais populares:\n");
+    for (int i = 0; i < TAMANHO_HASH; i++) {
+        if (tabela->tabela[i] != NULL && tabela->tabela[i]->popularidade > 1000) {  // Definindo 1000 como limite de popularidade
+            printf("ID: %d, Título: %s, Avaliação: %.2f, Popularidade: %d\n",
+                   tabela->tabela[i]->id,
+                   tabela->tabela[i]->titulo,
+                   tabela->tabela[i]->avaliacao,
+                   tabela->tabela[i]->popularidade);
+        }
+    }
+}
+
+// Função principal para demonstrar o uso da tabela hash com recomendações de filmes/séries
+int main() {
+    // Inicializa a tabela hash
+    TabelaHash tabela = {NULL};
+
+    // Criação de alguns filmes/séries
+    Conteudo conteudo1 = {101, "Velozes & Furiosos 7", "Ação", 4.5, 1500};
+    Conteudo conteudo2 = {102, "Gente Grande 2", "Comédia", 3.8, 900};
+    Conteudo conteudo3 = {103, "O Amor não tira Férias", "Romance", 4.7, 3000};
+    Conteudo conteudo4 = {104, "Sopranos", "Drama", 4.0, 800};
+    Conteudo conteudo5 = {105, "John Wick", "Ação", 4.2, 1600};
+
+    // Insere os conteúdos na tabela hash
+    inserir(&tabela, &conteudo1);
+    inserir(&tabela, &conteudo2);
+    inserir(&tabela, &conteudo3);
+    inserir(&tabela, &conteudo4);
+    inserir(&tabela, &conteudo5);
+
+    // Busca por um conteúdo específico
+    int id_busca = 102;
+    Conteudo *c = buscar(&tabela, id_busca);
+    if (c != NULL) {
+        printf("Conteúdo encontrado: ID: %d, Título: %s, Gênero: %s, Avaliação: %.2f, Popularidade: %d\n",
+               c->id, c->titulo, c->genero, c->avaliacao, c->popularidade);
+    } else {
+        printf("Conteúdo com ID %d não encontrado.\n", id_busca);
+    }
+
+    // Deletar um conteúdo específico
+    deletar(&tabela, 102);  // Remove o conteúdo com ID 102
+
+    // Exibir recomendações por gênero
+    exibir_recomendacoes_por_genero(&tabela, "Ação");
+
+    // Exibir os conteúdos mais populares
+    exibir_recomendacoes_populares(&tabela);
+
+    return 0;
+}
