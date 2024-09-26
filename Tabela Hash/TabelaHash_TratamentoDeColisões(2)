@@ -1,0 +1,197 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define TAMANHO_HASH 10
+
+// Estrutura para representar um filme ou série
+typedef struct {
+    int id;               // ID único do filme/série
+    char titulo[100];     // Título do filme/série
+    char genero[50];      // Gênero do filme/série
+    float avaliacao;      // Avaliação do filme/série (0 a 5)
+    int popularidade;     // Popularidade global (número de visualizações)
+} Conteudo;
+
+// Estrutura de um nó para a lista ligada (Encadeamento)
+typedef struct Node {
+    Conteudo *conteudo;
+    struct Node *next;
+} Node;
+
+// Estrutura da Tabela Hash para Encadeamento
+typedef struct {
+    Node *tabela[TAMANHO_HASH];  // Array de ponteiros para listas
+} TabelaHashEncadeamento;
+
+// Estrutura da Tabela Hash para Endereçamento Aberto
+typedef struct {
+    Conteudo *tabela[TAMANHO_HASH];  // Array de ponteiros
+} TabelaHashAberta;
+
+// Função Hash: Retorna o índice baseado no ID do conteúdo
+int funcao_hash(int id) {
+    return id % TAMANHO_HASH;  // Usa módulo para determinar a posição na tabela
+}
+
+// Função para inserir um conteúdo na tabela hash (Encadeamento)
+void inserir_encadeamento(TabelaHashEncadeamento *tabela, Conteudo *conteudo) {
+    int indice = funcao_hash(conteudo->id);
+    Node *novo_no = malloc(sizeof(Node));
+    novo_no->conteudo = conteudo;
+    novo_no->next = tabela->tabela[indice];  // Insere no início da lista
+    tabela->tabela[indice] = novo_no;  // Atualiza a tabela
+}
+
+// Função para buscar um conteúdo na tabela hash pelo ID (Encadeamento)
+Conteudo *buscar_encadeamento(TabelaHashEncadeamento *tabela, int id) {
+    int indice = funcao_hash(id);
+    Node *atual = tabela->tabela[indice];
+    while (atual != NULL) {
+        if (atual->conteudo->id == id) {
+            return atual->conteudo;  // Retorna o conteúdo encontrado
+        }
+        atual = atual->next;  // Move para o próximo nó
+    }
+    return NULL;  // Retorna NULL se não encontrar
+}
+
+// Função para exibir recomendações de filmes/séries de um gênero específico (Encadeamento)
+void exibir_recomendacoes_por_genero(TabelaHashEncadeamento *tabela, const char *genero) {
+    printf("Recomendações de %s:\n", genero);
+    for (int i = 0; i < TAMANHO_HASH; i++) {
+        Node *atual = tabela->tabela[i];
+        while (atual != NULL) {
+            if (strcmp(atual->conteudo->genero, genero) == 0) {
+                printf("ID: %d, Título: %s, Avaliação: %.2f, Popularidade: %d\n",
+                       atual->conteudo->id,
+                       atual->conteudo->titulo,
+                       atual->conteudo->avaliacao,
+                       atual->conteudo->popularidade);
+            }
+            atual = atual->next;  // Move para o próximo nó
+        }
+    }
+}
+
+// Função para exibir recomendações dos conteúdos mais populares (Encadeamento)
+void exibir_recomendacoes_populares(TabelaHashEncadeamento *tabela) {
+    printf("\nRecomendações dos mais populares:\n");
+    for (int i = 0; i < TAMANHO_HASH; i++) {
+        Node *atual = tabela->tabela[i];
+        while (atual != NULL) {
+            if (atual->conteudo->popularidade > 1000) {
+                printf("ID: %d, Título: %s, Avaliação: %.2f, Popularidade: %d\n",
+                       atual->conteudo->id,
+                       atual->conteudo->titulo,
+                       atual->conteudo->avaliacao,
+                       atual->conteudo->popularidade);
+            }
+            atual = atual->next;  // Move para o próximo nó
+        }
+    }
+}
+
+// Função para inserir um conteúdo na tabela hash (Endereçamento Aberto)
+void inserir_aberta(TabelaHashAberta *tabela, Conteudo *conteudo) {
+    int indice;
+    for (int i = 0; i < TAMANHO_HASH; i++) {
+        indice = (funcao_hash(conteudo->id) + i) % TAMANHO_HASH;  // Sondagem linear
+        if (tabela->tabela[indice] == NULL) {
+            tabela->tabela[indice] = conteudo;  // Insere o conteúdo na tabela
+            return;
+        }
+    }
+    printf("Tabela cheia, não foi possível inserir o conteúdo ID: %d\n", conteudo->id);
+}
+
+// Função para buscar um conteúdo na tabela hash pelo ID (Endereçamento Aberto)
+Conteudo *buscar_aberta(TabelaHashAberta *tabela, int id) {
+    int indice;
+    for (int i = 0; i < TAMANHO_HASH; i++) {
+        indice = (funcao_hash(id) + i) % TAMANHO_HASH;  // Sondagem linear
+        if (tabela->tabela[indice] == NULL) {
+            return NULL;  // Retorna NULL se não encontrar
+        }
+        if (tabela->tabela[indice]->id == id) {
+            return tabela->tabela[indice];  // Retorna o conteúdo encontrado
+        }
+    }
+    return NULL;  // Retorna NULL se não encontrar
+}
+
+// Função para deletar um conteúdo da tabela hash (Endereçamento Aberto)
+void deletar_aberta(TabelaHashAberta *tabela, int id) {
+    int indice;
+    for (int i = 0; i < TAMANHO_HASH; i++) {
+        indice = (funcao_hash(id) + i) % TAMANHO_HASH;  // Sondagem linear
+        if (tabela->tabela[indice] == NULL) {
+            printf("Conteúdo com ID %d não encontrado.\n", id);
+            return;  // Retorna se não encontrar
+        }
+        if (tabela->tabela[indice]->id == id) {
+            tabela->tabela[indice] = NULL;  // Remove o conteúdo
+            printf("Conteúdo com ID %d foi deletado.\n", id);
+            return;
+        }
+    }
+    printf("Conteúdo com ID %d não encontrado.\n", id);
+}
+
+// Função principal para demonstrar o uso da tabela hash com recomendações de filmes/séries
+int main() {
+    // Inicializa as tabelas hash
+    TabelaHashEncadeamento tabela_encadeamento = {NULL};
+    TabelaHashAberta tabela_aberta = {NULL};
+
+    // Criação de alguns filmes/séries
+    Conteudo conteudo1 = {101, "Velozes & Furiosos 7", "Ação", 4.5, 1500};
+    Conteudo conteudo2 = {102, "Gente Grande 2", "Comédia", 3.8, 900};
+    Conteudo conteudo3 = {103, "O Amor não tira Férias", "Romance", 4.7, 3000};
+    Conteudo conteudo4 = {104, "Sopranos", "Drama", 4.0, 800};
+    Conteudo conteudo5 = {105, "John Wick", "Ação", 4.2, 1600};
+
+    // Insere os conteúdos na tabela de encadeamento
+    inserir_encadeamento(&tabela_encadeamento, &conteudo1);
+    inserir_encadeamento(&tabela_encadeamento, &conteudo2);
+    inserir_encadeamento(&tabela_encadeamento, &conteudo3);
+    inserir_encadeamento(&tabela_encadeamento, &conteudo4);
+    inserir_encadeamento(&tabela_encadeamento, &conteudo5);
+
+    // Insere os conteúdos na tabela de endereçamento aberto
+    inserir_aberta(&tabela_aberta, &conteudo1);
+    inserir_aberta(&tabela_aberta, &conteudo2);
+    inserir_aberta(&tabela_aberta, &conteudo3);
+    inserir_aberta(&tabela_aberta, &conteudo4);
+    inserir_aberta(&tabela_aberta, &conteudo5);
+
+    // Busca por um conteúdo específico na tabela de encadeamento
+    int id_busca = 102;
+    Conteudo *c_encadeamento = buscar_encadeamento(&tabela_encadeamento, id_busca);
+    if (c_encadeamento != NULL) {
+        printf("Conteúdo encontrado (Encadeamento): ID: %d, Título: %s, Gênero: %s, Avaliação: %.2f, Popularidade: %d\n",
+               c_encadeamento->id, c_encadeamento->titulo, c_encadeamento->genero, c_encadeamento->avaliacao, c_encadeamento->popularidade);
+    } else {
+        printf("Conteúdo com ID %d não encontrado na tabela de encadeamento.\n", id_busca);
+    }
+
+    // Busca por um conteúdo específico na tabela de endereçamento aberto
+    Conteudo *c_aberta = buscar_aberta(&tabela_aberta, id_busca);
+    if (c_aberta != NULL) {
+        printf("Conteúdo encontrado (Endereçamento Aberto): ID: %d, Título: %s, Gênero: %s, Avaliação: %.2f, Popularidade: %d\n",
+               c_aberta->id, c_aberta->titulo, c_aberta->genero, c_aberta->avaliacao, c_aberta->popularidade);
+    } else {
+        printf("Conteúdo com ID %d não encontrado na tabela de endereçamento aberto.\n", id_busca);
+    }
+
+    // Deletar um conteúdo específico na tabela de endereçamento aberto
+    deletar_aberta(&tabela_aberta, 102);  // Remove o conteúdo com ID 102
+
+    // Exibir recomendações por gênero na tabela de encadeamento
+    exibir_recomendacoes_por_genero(&tabela_encadeamento, "Ação");
+
+    // Exibir os conteúdos mais populares na tabela de encadeamento
+    exibir_recomendacoes_populares(&tabela_encadeamento);
+
+    return 0;
+}
